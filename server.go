@@ -43,7 +43,6 @@ type Server struct {
 	connections       map[*Conn]struct{}
 	connect           chan *Conn
 	disconnect        chan *Conn
-	actions           chan action
 	broadcastMessages chan []Message
 
 	broadcaster *broadcaster
@@ -70,10 +69,8 @@ func New(upgrader Upgrader, opts ...ServerOption) *Server {
 		connections:       make(map[*Conn]struct{}),
 		connect:           make(chan *Conn, 1),
 		disconnect:        make(chan *Conn),
-		actions:           make(chan action),
 		broadcastMessages: make(chan []Message),
 		broadcaster:       newBroadcaster(),
-		waitingMessages:   make(map[string]chan Message),
 		IDGenerator:       DefaultIDGenerator,
 	}
 
@@ -110,14 +107,7 @@ func (s *Server) start() {
 			for c := range s.connections {
 				publishMessages(c, msgs)
 			}
-		case act := <-s.actions:
-			for c := range s.connections {
-				act.call(c)
-			}
-
-			if act.done != nil {
-				act.done <- struct{}{}
-			}
+//todo
 		}
 	}
 }
